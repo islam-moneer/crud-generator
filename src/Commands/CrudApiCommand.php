@@ -4,6 +4,7 @@ namespace Appzcoder\CrudGenerator\Commands;
 
 use File;
 use Illuminate\Console\Command;
+use Illuminate\Support\Str;
 
 class CrudApiCommand extends Command
 {
@@ -59,12 +60,12 @@ class CrudApiCommand extends Command
     public function handle()
     {
         $name = $this->argument('name');
-        $modelName = str_singular($name);
-        $migrationName = str_plural(snake_case($name));
+        $modelName = Str::singular($name);
+        $migrationName = Str::plural(Str::snake($name));
         $tableName = $migrationName;
 
         $routeGroup = $this->option('route-group');
-        $this->routeName = ($routeGroup) ? $routeGroup . '/' . snake_case($name, '-') : snake_case($name, '-');
+        $this->routeName = ($routeGroup) ? $routeGroup . '/' . Str::snake($name, '-') : Str::snake($name, '-');
         $perPage = intval($this->option('pagination'));
 
         $controllerNamespace = ($this->option('controller-namespace')) ? $this->option('controller-namespace') . '\\' : '';
@@ -91,6 +92,7 @@ class CrudApiCommand extends Command
 
         $fieldsArray = explode(';', $fields);
         $fillableArray = [];
+        $migrationFields = '';
 
         foreach ($fieldsArray as $item) {
             $spareParts = explode('#', trim($item));
@@ -119,7 +121,9 @@ class CrudApiCommand extends Command
         $this->call('crud:migration', ['name' => $migrationName, '--schema' => $migrationFields, '--pk' => $primaryKey, '--indexes' => $indexes, '--foreign-keys' => $foreignKeys, '--soft-deletes' => $softDeletes]);
 
         // For optimizing the class loader
-        $this->callSilent('optimize');
+        if (\App::VERSION() < '5.6') {
+            $this->callSilent('optimize');
+        }
 
         // Updating the Http/routes.php file
         $routeFile = app_path('Http/routes.php');

@@ -4,6 +4,7 @@ namespace Appzcoder\CrudGenerator\Commands;
 
 use File;
 use Illuminate\Console\Command;
+use Illuminate\Support\Str;
 
 class CrudCommand extends Command
 {
@@ -30,6 +31,7 @@ class CrudCommand extends Command
                             {--form-helper=html : Helper for generating the form.}
                             {--localize=no : Allow to localize? yes|no.}
                             {--locales=en : Locales language type.}
+                            {--tests=false : Create unit test true|false.}
                             {--soft-deletes=no : Include soft deletes fields.}';
 
     /**
@@ -37,7 +39,7 @@ class CrudCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Generate Crud including controller, model, views & migrations.';
+    protected $description = 'Generate Crud including controller, model, views, migrations & tests.';
 
     /** @var string  */
     protected $routeName = '';
@@ -63,12 +65,13 @@ class CrudCommand extends Command
     public function handle()
     {
         $name = $this->argument('name');
-        $modelName = str_singular($name);
-        $migrationName = str_plural(snake_case($name));
+        $modelName = Str::singular($name);
+        $migrationName = Str::plural(Str::snake($name));
         $tableName = $migrationName;
-
+        // Test option
+        $test = $this->option('tests');
         $routeGroup = $this->option('route-group');
-        $this->routeName = ($routeGroup) ? $routeGroup . '/' . snake_case($name, '-') : snake_case($name, '-');
+        $this->routeName = ($routeGroup) ? $routeGroup . '/' . Str::snake($name, '-') : Str::snake($name, '-');
         $perPage = intval($this->option('pagination'));
 
         $controllerNamespace = ($this->option('controller-namespace')) ? $this->option('controller-namespace') . '\\' : '';
@@ -123,7 +126,9 @@ class CrudCommand extends Command
 
         $formHelper = $this->option('form-helper');
         $softDeletes = $this->option('soft-deletes');
-
+        if ($test == "true") {
+            $this->call('crud:test', ['name' =>  $name, '--crud-name' => $name, '--model-name' => $modelName, '--model-namespace' => $modelNamespace, '--view-path' => $viewPath, '--route-group' => $routeGroup, '--pagination' => $perPage, '--fields' => $fields, '--validations' => $validations]);
+        }
         $this->call('crud:controller', ['name' => $controllerNamespace . $name . 'Controller', '--crud-name' => $name, '--model-name' => $modelName, '--model-namespace' => $modelNamespace, '--view-path' => $viewPath, '--route-group' => $routeGroup, '--pagination' => $perPage, '--fields' => $fields, '--validations' => $validations]);
         $this->call('crud:model', ['name' => $modelNamespace . $modelName, '--fillable' => $fillable, '--table' => $tableName, '--pk' => $primaryKey, '--relationships' => $relationships, '--soft-deletes' => $softDeletes]);
         $this->call('crud:migration', ['name' => $migrationName, '--schema' => $migrationFields, '--pk' => $primaryKey, '--indexes' => $indexes, '--foreign-keys' => $foreignKeys, '--soft-deletes' => $softDeletes]);
@@ -131,8 +136,12 @@ class CrudCommand extends Command
         if ($localize == 'yes') {
             $this->call('crud:lang', ['name' => $name, '--fields' => $fields, '--locales' => $locales]);
         }
+
+
         // For optimizing the class loader
-        $this->callSilent('optimize');
+        if (\App::VERSION() < '5.6') {
+            $this->callSilent('optimize');
+        }
 
         // Updating the Http/routes.php file
         $routeFile = app_path('Http/routes.php');
@@ -178,7 +187,7 @@ class CrudCommand extends Command
 
         $fieldsString = '';
         foreach ($fields->fields as $field) {
-            if ($field->type == 'select') {
+            if ($field->type === 'select' || $field->type === 'enum') {
                 $fieldsString .= $field->name . '#' . $field->type . '#options=' . json_encode($field->options) . ';';
             } else {
                 $fieldsString .= $field->name . '#' . $field->type . ';';

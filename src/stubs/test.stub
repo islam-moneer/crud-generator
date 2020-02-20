@@ -1,0 +1,131 @@
+<?php
+
+namespace Tests\Feature;
+
+use Tests\TestCase;
+use {{modelNamespace}}\{{modelName}};
+use Spatie\Permission\Models\Role;
+
+class {{DummyClass}} extends TestCase
+{
+    protected ${{crudNameSingular}};
+
+    protected $routeGroup;
+
+    public function setUp(): void
+    {
+        // TODO: Create factory to seed data
+        parent::setUp();
+        $this->{{crudNameSingular}} = factory({{modelName}}::class)->create();
+        $this->routeGroup = "{{routePrefix}}";
+    }
+
+    /** @test */
+    public function it_has_permission_to_view_users() {
+        $admin = factory(\App\Admin::class)->create([
+            'email' => $this->faker->safeEmail
+        ]);
+
+        $admin->assignRole(Role::create(['name' => 'test']));
+
+        $this->be($admin, 'admin');
+
+
+        $this->get("{$this->adminUrl}/{{viewName}}")
+            ->assertStatus(403);
+
+        $this->get("{$this->adminUrl}/{{viewName}}/{$this->user->id}")
+            ->assertStatus(403);
+
+        $this->get("{$this->adminUrl}/{{viewName}}/create")
+            ->assertStatus(403);
+
+        $this->post("{$this->adminUrl}/{{viewName}}")
+            ->assertStatus(403);
+
+        $this->get("{$this->adminUrl}/{{viewName}}/{$this->user->id}/edit")
+            ->assertStatus(403);
+
+        $this->put("{$this->adminUrl}/{{viewName}}/{$this->user->id}")
+            ->assertStatus(403);
+
+        $this->delete("{$this->adminUrl}/{{viewName}}/{$this->user->id}")
+            ->assertStatus(403);
+    }
+
+    /**
+     * @test
+     */
+    public function it_can_view_index()
+    {
+        $this->get("{$this->adminUrl}/{{viewName}}")
+            ->assertSuccessful()
+            ->assertViewIs($this->routeGroup . '{{viewName}}.index');
+    }
+
+    /**
+     * @test
+     */
+    public function it_can_create_{{crudNameSingular}}()
+    {
+        $this->get("{$this->adminUrl}/{{viewName}}/create")
+            ->assertSuccessful()
+            ->assertViewIs($this->routeGroup . '{{viewName}}.create');
+    }
+
+    /**
+    * @test
+    */
+    public function it_can_store_{{crudNameSingular}}()
+    {
+        $this->post("{$this->adminUrl}/{{viewName}}",[
+            {{inputs}}])
+            ->assertSuccessful()
+            ->assertSessionHas(['message' => '{{modelName}} added!']);
+    }
+
+    /**
+    * @test
+    */
+    public function it_can_display_{{crudNameSingular}}()
+    {
+        $this->get("{$this->adminUrl}/{{viewName}}/{$this->{{crudNameSingular}}->id}")
+            ->assertSuccessful()
+            ->assertViewIs($this->routeGroup . '{{viewName}}.show');
+    }
+
+    /**
+    * @test
+    */
+    public function it_can_view_edit_{{crudNameSingular}}()
+    {
+        $this->get("{$this->adminUrl}/{{viewName}}/{$this->{{crudNameSingular}}->id}/edit")
+            ->assertSuccessful()
+            ->assertViewIs($this->routeGroup . '{{viewName}}.edit');
+    }
+
+    /**
+    * @test
+    */
+    public function it_can_update_{{crudNameSingular}}()
+    {
+        $this->post("{$this->adminUrl}/{{viewName}}/{$this->{{crudNameSingular}}->id}",[
+            {{inputs}}])
+            ->assertSuccessful()
+            ->assertSessionHas(['message' => '{{modelName}} updated!']);
+    }
+
+    /**
+    * @test
+    */
+    public function it_can_delete_{{crudNameSingular}}()
+    {
+        $this->delete("{$this->adminUrl}/{{viewName}}/{$this->{{crudNameSingular}}->id}")
+            ->assertRedirect("{$this->adminUrl}/{{viewName}}")
+            ->assertSessionHas(['message' => '{{modelName}} deleted!']);
+
+        $this->assertDatabaseMissing('{{viewName}}', [
+            'id' => $this->{{crudNameSingular}}->id
+        ]);
+    }
+}

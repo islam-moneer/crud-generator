@@ -4,6 +4,7 @@ namespace Appzcoder\CrudGenerator\Commands;
 
 use File;
 use Illuminate\Console\Command;
+use Illuminate\Support\Str;
 
 class CrudViewCommand extends Command
 {
@@ -13,15 +14,15 @@ class CrudViewCommand extends Command
      * @var string
      */
     protected $signature = 'crud:view
-                            {name : The name of the Crud.}
-                            {--fields= : The field names for the form.}
-                            {--view-path= : The name of the view path.}
-                            {--route-group= : Prefix of the route group.}
-                            {--pk=id : The name of the primary key.}
-                            {--validations= : Validation rules for the fields.}
-                            {--form-helper=html : Helper for the form.}
-                            {--custom-data= : Some additional values to use in the crud.}
-                            {--localize=no : Localize the view? yes|no.}';
+        {name : The name of the Crud.}
+        {--fields= : The field names for the form.}
+        {--view-path= : The name of the view path.}
+        {--route-group= : Prefix of the route group.}
+        {--pk=id : The name of the primary key.}
+        {--validations= : Validation rules for the fields.}
+        {--form-helper=html : Helper for the form.}
+        {--custom-data= : Some additional values to use in the crud.}
+        {--localize=no : Localize the view? yes|no.}';
 
     /**
      * The console command description.
@@ -67,6 +68,7 @@ class CrudViewCommand extends Command
         'datetime' => 'datetime-local',
         'timestamp' => 'datetime-local',
         'time' => 'time',
+        'radio' => 'radio',
         'boolean' => 'radio',
         'enum' => 'select',
         'select' => 'select',
@@ -240,14 +242,14 @@ class CrudViewCommand extends Command
 
     /**
      * Create a new command instance.
-     *
      */
     public function __construct()
     {
         parent::__construct();
 
         if (config('crudgenerator.view_columns_number')) {
-            $this->defaultColumnsToShow = config('crudgenerator.view_columns_number');
+            $this
+                ->defaultColumnsToShow = config('crudgenerator.view_columns_number');
         }
 
         $this->delimiter = config('crudgenerator.custom_delimiter')
@@ -271,8 +273,8 @@ class CrudViewCommand extends Command
         $this->crudName = strtolower($this->argument('name'));
         $this->varName = lcfirst($this->argument('name'));
         $this->crudNameCap = ucwords($this->crudName);
-        $this->crudNameSingular = str_singular($this->crudName);
-        $this->modelName = str_singular($this->argument('name'));
+        $this->crudNameSingular = Str::singular($this->crudName);
+        $this->modelName = Str::singular($this->argument('name'));
         $this->modelNameCap = ucfirst($this->modelName);
         $this->customData = $this->option('custom-data');
         $this->primaryKey = $this->option('pk');
@@ -281,7 +283,7 @@ class CrudViewCommand extends Command
             : $this->option('route-group');
         $this->routePrefix = ($this->option('route-group')) ? $this->option('route-group') : '';
         $this->routePrefixCap = ucfirst($this->routePrefix);
-        $this->viewName = snake_case($this->argument('name'), '-');
+        $this->viewName = Str::snake($this->argument('name'), '-');
 
         $viewDirectory = config('view.paths')[0] . '/';
         if ($this->option('view-path')) {
@@ -313,9 +315,12 @@ class CrudViewCommand extends Command
 
                 $this->formFields[$x]['name'] = trim($itemArray[0]);
                 $this->formFields[$x]['type'] = trim($itemArray[1]);
-                $this->formFields[$x]['required'] = preg_match('/' . $itemArray[0] . '/', $validations) ? true : false;
+                $this->formFields[$x]['required'] = preg_match('/' . $itemArray[0] . '/', $validations)? true : false;
 
-                if ($this->formFields[$x]['type'] == 'select' && isset($itemArray[2])) {
+                if (($this->formFields[$x]['type'] === 'select'
+                    || $this->formFields[$x]['type'] === 'enum')
+                    && isset($itemArray[2])
+                ) {
                     $options = trim($itemArray[2]);
                     $options = str_replace('options=', '', $options);
 
@@ -568,9 +573,13 @@ class CrudViewCommand extends Command
         $end = $this->delimiter[1];
 
         $markup = File::get($this->viewDirectoryPath . 'form-fields/radio-field.blade.stub');
+        $markup = str_replace($start . 'itemName' . $end, $item['name'], $markup);
         $markup = str_replace($start . 'crudNameSingular' . $end, $this->crudNameSingular, $markup);
 
-        return $this->wrapField($item, sprintf($markup, $item['name']));
+        return $this->wrapField(
+            $item,
+            $markup
+        );
     }
 
     /**
