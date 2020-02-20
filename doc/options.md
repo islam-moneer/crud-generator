@@ -19,6 +19,7 @@
 | `--view-path` | The name of the view path |
 | `--form-helper` | Helper for the form. eg. `--form-helper=html`, `--form-helper=laravelcollective` |
 | `--localize` | Allow to localize. e.g. localize=yes  |
+| `--tests` | Create unit test true|false. eg. `--tests=true`|
 | `--locales`  | Locales language type. e.g. locals=en |
 | `--soft-deletes` | Include soft deletes fields. eg. `--soft-deletes=yes` |
 

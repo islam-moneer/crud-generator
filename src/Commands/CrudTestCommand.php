@@ -20,7 +20,6 @@ class CrudTestCommand extends GeneratorCommand
                             {--crud-name= : The name of the Crud.}
                             {--model-name= : The name of the Model.}
                             {--model-namespace= : The namespace of the Model.}
-                            {--controller-namespace= : Namespace of the controller.}
                             {--view-path= : The name of the view path.}
                             {--fields= : Field names for the form & migration.}
                             {--validations= : Validation rules for the fields.}

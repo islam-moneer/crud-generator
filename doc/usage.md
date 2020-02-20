@@ -3,7 +3,7 @@
 ### CRUD Command
 
 ```
-php artisan crud:generate Posts --fields='title#string; content#text; category#select#options={"technology": "Technology", "tips": "Tips", "health": "Health"}' --view-path=admin --controller-namespace=Admin --route-group=admin --form-helper=html
+php artisan crud:generate Posts --fields='title#string; content#text; category#select#options={"technology": "Technology", "tips": "Tips", "health": "Health"}' --view-path=admin --controller-namespace=Admin --route-group=admin --form-helper=html --tests=true
 ```
 
 #### CRUD fields from a JSON file:
@@ -58,7 +58,7 @@ php artisan crud:generate Posts --fields='title#string; content#text; category#s
 ```
 
 ```
-php artisan crud:generate Posts --fields_from_file="/path/to/fields.json" --view-path=admin --controller-namespace=Admin --route-group=admin --form-helper=html
+php artisan crud:generate Posts --fields_from_file="/path/to/fields.json" --view-path=admin --controller-namespace=Admin --route-group=admin --form-helper=html --tests=true
 ```
 
 ### Other Commands
@@ -85,6 +85,12 @@ For view:
 
 ```
 php artisan crud:view posts --fields="title#string; body#text" --view-path="directory" --route-group=admin --form-helper=html
+```
+
+For test:
+
+```
+php artisan crud:test Posts --fields_from_file="/path/to/fields.json" --view-path=admin --route-group=admin 
 ```
 
 By default, the generator will attempt to append the crud route to your ```Route``` file. If you don't want the route added, you can use this option ```--route=no```.
